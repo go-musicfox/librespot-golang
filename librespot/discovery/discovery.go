@@ -5,18 +5,19 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/badfortrains/mdns"
 	"log"
 	"math/rand"
+	"net"
 	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
 	"sync"
 
+	"github.com/badfortrains/mdns"
+
 	"github.com/librespot-org/librespot-golang/librespot/crypto"
 	"github.com/librespot-org/librespot-golang/librespot/utils"
-	"net"
 )
 
 // connectInfo stores the information about Spotify Connect connection
@@ -161,16 +162,16 @@ func (d *Discovery) FindDevices() {
 		for entry := range ch {
 			cPath := findCpath(entry.InfoFields)
 			path := fmt.Sprintf("http://%v:%v%v", entry.AddrV4, entry.Port, cPath)
-			fmt.Println("Found a device", entry)
+			log.Println("Found a device", entry)
 			d.devicesLock.Lock()
 			d.devices = append(d.devices, connectDeviceMdns{
 				Path: path,
 				Name: strings.Replace(entry.Name, "._spotify-connect._tcp.local.", "", 1),
 			})
-			fmt.Println("devices", d.devices)
+			log.Println("devices", d.devices)
 			d.devicesLock.Unlock()
 		}
-		fmt.Println("closed")
+		log.Println("closed")
 	}()
 
 	err := mdns.Lookup("_spotify-connect._tcp.", ch)
@@ -184,7 +185,7 @@ func (d *Discovery) ConnectToDevice(address string) {
 	resp, err = http.Get(address + "?action=resetUsers")
 	resp, err = http.Get(address + "?action=connectGetInfo")
 
-	fmt.Println("start get")
+	log.Println("start get")
 	defer resp.Body.Close()
 	decoder := json.NewDecoder(resp.Body)
 	info := connectInfo{}
@@ -192,7 +193,7 @@ func (d *Discovery) ConnectToDevice(address string) {
 	if err != nil {
 		panic("bad json")
 	}
-	fmt.Println("resposne", resp)
+	log.Println("resposne", resp)
 
 	client64 := base64.StdEncoding.EncodeToString(d.keys.PubKey())
 	blob, err := d.loginBlob.MakeAuthBlob(info.DeviceID,
@@ -208,7 +209,7 @@ func (d *Discovery) ConnectToDevice(address string) {
 	var f interface{}
 	err = decoder.Decode(&f)
 
-	fmt.Println("got", f, resp, err)
+	log.Println("got", f, resp, err)
 }
 
 func makeAddUserRequest(username string, blob string, key string, deviceId string, deviceName string) url.Values {
@@ -265,7 +266,7 @@ func (d *Discovery) handleAddUser(r *http.Request) error {
 func (d *Discovery) startHttp(done chan int, l net.Listener) {
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		action := r.FormValue("action")
-		fmt.Println("got Request: ", action)
+		log.Println("got Request: ", action)
 		switch {
 		case "connectGetInfo" == action || "resetUsers" == action:
 			client64 := base64.StdEncoding.EncodeToString(d.keys.PubKey())
@@ -290,12 +291,12 @@ func (d *Discovery) startHttp(done chan int, l net.Listener) {
 	d.httpServer = &http.Server{}
 	err := d.httpServer.Serve(l)
 	if err != nil {
-		fmt.Println("got an error", err)
+		log.Println("got an error", err)
 	}
 }
 
 func (d *Discovery) startDiscoverable() {
-	fmt.Println("start discoverable")
+	log.Println("start discoverable")
 	info := []string{"VERSION=1.0", "CPath=/"}
 
 	ifaces, err := net.Interfaces()
@@ -311,7 +312,7 @@ func (d *Discovery) startDiscoverable() {
 			case *net.IPAddr:
 				ips = append(ips, v.IP)
 			}
-			fmt.Println("found ip ", ips)
+			log.Println("found ip ", ips)
 			// process IP address
 		}
 	}
@@ -319,7 +320,7 @@ func (d *Discovery) startDiscoverable() {
 	service, err := mdns.NewMDNSService("librespot"+strconv.Itoa(rand.Intn(200)),
 		"_spotify-connect._tcp", "", "", 8000, ips, info)
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 		log.Fatal("error starting Discovery")
 	}
 	server, err := mdns.NewServer(&mdns.Config{

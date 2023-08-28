@@ -5,12 +5,13 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"encoding/binary"
-	"fmt"
-	"github.com/librespot-org/librespot-golang/Spotify"
-	"github.com/librespot-org/librespot-golang/librespot/connection"
 	"io"
+	"log"
 	"math"
 	"sync"
+
+	"github.com/librespot-org/librespot-golang/Spotify"
+	"github.com/librespot-org/librespot-golang/librespot/connection"
 )
 
 const kChunkSize = 32768 // In number of words (so actual byte size is kChunkSize*4, aka. kChunkByteSize)
@@ -189,7 +190,7 @@ func (a *AudioFile) hasChunk(index int) bool {
 func (a *AudioFile) loadKey(trackId []byte) error {
 	key, err := a.player.loadTrackKey(trackId, a.fileId)
 	if err != nil {
-		fmt.Printf("[audiofile] Unable to load key: %s\n", err)
+		log.Printf("[audiofile] Unable to load key: %s\n", err)
 		return err
 	}
 

@@ -3,12 +3,12 @@ package player
 import (
 	"bytes"
 	"encoding/binary"
-	"fmt"
+	"log"
+	"sync"
+
 	"github.com/librespot-org/librespot-golang/Spotify"
 	"github.com/librespot-org/librespot-golang/librespot/connection"
 	"github.com/librespot-org/librespot-golang/librespot/mercury"
-	"log"
-	"sync"
 )
 
 type Player struct {
@@ -95,13 +95,13 @@ func (p *Player) HandleCmd(cmd byte, data []byte) {
 		if channel, ok := p.seqChans.Load(seqNum); ok {
 			channel.(chan []byte) <- data[4:20]
 		} else {
-			fmt.Printf("[player] Unknown channel for audio key seqNum %d\n", seqNum)
+			log.Printf("[player] Unknown channel for audio key seqNum %d\n", seqNum)
 		}
 
 	case cmd == connection.PacketAesKeyError:
 		// Audio key error
-		fmt.Println("[player] Audio key error!")
-		fmt.Printf("%x\n", data)
+		log.Println("[player] Audio key error!")
+		log.Printf("%x\n", data)
 
 	case cmd == connection.PacketStreamChunkRes:
 		// Audio data response
@@ -114,7 +114,7 @@ func (p *Player) HandleCmd(cmd byte, data []byte) {
 		if val, ok := p.channels[channel]; ok {
 			val.handlePacket(data[2:])
 		} else {
-			fmt.Printf("Unknown channel!\n")
+			log.Printf("Unknown channel!\n")
 		}
 	}
 }

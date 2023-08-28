@@ -3,6 +3,7 @@ package mercury
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/url"
 
 	"github.com/golang/protobuf/proto"
@@ -126,7 +127,7 @@ func parseSuggest(body []byte) (*metadata.SuggestResult, error) {
 	result := &metadata.SuggestResult{}
 	err := json.Unmarshal(body, result)
 	if err != nil {
-		fmt.Println("err", err)
+		log.Println("err", err)
 	}
 
 	for _, s := range result.Sections {

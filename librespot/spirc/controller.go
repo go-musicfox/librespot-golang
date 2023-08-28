@@ -3,13 +3,15 @@ package spirc
 import (
 	"errors"
 	"fmt"
+	"log"
+	"strings"
+	"sync"
+
 	"github.com/golang/protobuf/proto"
 	"github.com/librespot-org/librespot-golang/Spotify"
 	"github.com/librespot-org/librespot-golang/librespot/core"
 	"github.com/librespot-org/librespot-golang/librespot/mercury"
 	"github.com/librespot-org/librespot-golang/librespot/utils"
-	"strings"
-	"sync"
 )
 
 // Controller is a structure for Spotify Connect remote control interface.
@@ -210,7 +212,7 @@ func (c *Controller) run(ch chan mercury.Response) {
 		frame := &Spotify.Frame{}
 		err := proto.Unmarshal(response.Payload[0], frame)
 		if err != nil {
-			fmt.Println("error getting packet")
+			log.Println("error getting packet")
 			continue
 		}
 
@@ -232,13 +234,13 @@ func (c *Controller) run(ch chan mercury.Response) {
 		if c.updateChan != nil {
 			select {
 			case c.updateChan <- *frame:
-				fmt.Println("sent update")
+				log.Println("sent update")
 			default:
-				fmt.Println("dropped update")
+				log.Println("dropped update")
 			}
 		}
 
-		fmt.Printf("%v %v %v %v %v %v \n",
+		log.Printf("%v %v %v %v %v %v \n",
 			frame.Typ,
 			frame.DeviceState.GetName(),
 			*frame.Ident,

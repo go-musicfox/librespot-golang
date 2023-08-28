@@ -294,7 +294,7 @@ func (s *Session) handle(cmd uint8, data []byte) {
 		// is [ uint16 id (= 0x001), uint8 len, string license ]
 
 	default:
-		fmt.Printf("Unhandled cmd 0x%x\n", cmd)
+		log.Printf("Unhandled cmd 0x%x\n", cmd)
 	}
 }
 

@@ -3,12 +3,13 @@ package mercury
 import (
 	"bytes"
 	"encoding/binary"
-	"fmt"
+	"io"
+	"log"
+	"sync"
+
 	"github.com/golang/protobuf/proto"
 	"github.com/librespot-org/librespot-golang/Spotify"
 	"github.com/librespot-org/librespot-golang/librespot/connection"
-	"io"
-	"sync"
 )
 
 // Mercury is the protocol implementation for Spotify Connect playback control and metadata fetching.It works as a
@@ -237,18 +238,18 @@ func handleHead(reader io.Reader) (seq []byte, flags uint8, count uint16, err er
 	seq = make([]byte, seqLength)
 	_, err = io.ReadFull(reader, seq)
 	if err != nil {
-		fmt.Println("read seq")
+		log.Println("read seq")
 		return
 	}
 
 	err = binary.Read(reader, binary.BigEndian, &flags)
 	if err != nil {
-		fmt.Println("read flags")
+		log.Println("read flags")
 		return
 	}
 	err = binary.Read(reader, binary.BigEndian, &count)
 	if err != nil {
-		fmt.Println("read count")
+		log.Println("read count")
 		return
 	}
 
@@ -285,7 +286,7 @@ func (m *Client) Handle(cmd uint8, reader io.Reader) (err error) {
 func (m *Internal) parseResponse(cmd uint8, reader io.Reader) (response *Response, err error) {
 	seq, flags, count, err := handleHead(reader)
 	if err != nil {
-		fmt.Println("error handling response", err)
+		log.Println("error handling response", err)
 		return
 	}
 
@@ -301,7 +302,7 @@ func (m *Internal) parseResponse(cmd uint8, reader io.Reader) (response *Respons
 	for i := uint16(0); i < count; i++ {
 		part, err := parsePart(reader)
 		if err != nil {
-			fmt.Println("read part")
+			log.Println("read part")
 			return nil, err
 		}
 
